@@ -42,3 +42,4 @@ services:
         reservations:
           cpus: '0.01'
           memory: 20M
+
