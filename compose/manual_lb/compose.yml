@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  nginx-lb:
+    build: ../../docker_file/nginx_compose
+    ports:
+      - "9889:80"
+    depends_on:
+      - awsgoo-blog-1
+      - awsgoo-blog-2
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 50M
+        reservations:
+          cpus: '0.05'
+          memory: 20M
+
+  awsgoo-blog-1:
+    build: ../../docker_file/httpd
+    expose:
+      - "80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: 50M
+        reservations:
+          cpus: '0.01'
+          memory: 20M
+
+  awsgoo-blog-2:
+    build: ../../docker_file/httpd
+    expose:
+      - "80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: 50M
+        reservations:
+          cpus: '0.01'
+          memory: 20M
