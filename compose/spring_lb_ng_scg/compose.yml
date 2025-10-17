@@ -1,7 +1,9 @@
+name: awsgoo
 services:
   # 게이트웨이 서비스 (sc-gateway)
   gateway:
     image: jhs7251/sc-gateway:0.4.3 # 빌드된 Docker 이미지 이름
+    container_name: gateway
     ports:
       - "9000:9000"
     environment:
@@ -11,23 +13,18 @@ services:
     depends_on:
       - hello-service
       - eureka
-    networks:
-      - my-network
 
   # 타겟 서비스 (hello-service)
   hello-service:
     image: jhs7251/inspire-simple-spring:0.3.1
     ports:
       - "8765:8080" # 외부로 8765 포트 노출 (선택 사항)
-    networks:
-      - my-network
     # Compose 내부에서는 서비스 이름(hello-service)이 DNS 역할을 합니다.
   eureka:
     image: jhs7251/eureka-serv:0.2.1
+    container_name: eureka
     ports:
       - "8761:8761"
-    networks:
-      - my-network
   user-service:
     image: jhs7251/user-service:0.1.0
     expose:
@@ -41,8 +38,19 @@ services:
     depends_on:
       eureka:
         condition: service_started
-    networks:
-      - my-network
-networks:
-  my-network:
-    driver: bridge
+  controller:
+    image: ngrinder/controller:3.5.8
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "8300:80"
+      - "16001:16001"
+      - "12000-12009:12000-12009"
+    volumes:
+      - ./ngrinder-controller:/opt/ngrinder-controller
+  agent:
+    image: ngrinder/agent:3.5.8
+    platform: linux/amd64
+    restart: always
+    links:
+      - controller
