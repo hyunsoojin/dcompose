@@ -1,5 +1,20 @@
 name: awsgoo
 services:
+  nginx-proxy:
+    build: ../../docker_file/nginx_compose
+    ports:
+      - "9889:80"
+    depends_on:
+      - blog
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 50M
+        reservations:
+          cpus: '0.05'
+          memory: 20M
+
   # 게이트웨이 서비스 (sc-gateway)
   gateway:
     image: jhs7251/sc-gateway:0.4.4 # 빌드된 Docker 이미지 이름
@@ -8,14 +23,14 @@ services:
       - "9000:9000"
     environment:
       # 💡 Compose 내부의 다른 서비스 이름을 사용하여 URI를 설정합니다.
-      - HELLO_SERVICE_URI=http://hello-service:8080
+      - HELLO_SERVICE_URI=http://blog:8080
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
     depends_on:
-      - hello-service
+      - blog
       - eureka
 
-  # 타겟 서비스 (hello-service)
-  hello-service:
+  # 타겟 서비스 (blog)
+  blog:
     image: jhs7251/inspire-simple-spring:0.3.1
     ports:
       - "8765:8080" # 외부로 8765 포트 노출 (선택 사항)
