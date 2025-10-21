@@ -1,0 +1,83 @@
+name: awsgoo
+services:
+  nginx-proxy:
+    build: ../../docker_file/nginx_compose
+    ports:
+      - "9889:80"
+    depends_on:
+      - blog
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 50M
+        reservations:
+          cpus: '0.05'
+          memory: 20M
+
+  # 게이트웨이 서비스 (sc-gateway)
+  gateway:
+    image: jhs7251/sc-gateway:0.4.4 # 빌드된 Docker 이미지 이름
+    container_name: gateway
+    ports:
+      - "9000:9000"
+    environment:
+      # 💡 Compose 내부의 다른 서비스 이름을 사용하여 URI를 설정합니다.
+      - HELLO_SERVICE_URI=http://blog:8080
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+    depends_on:
+      - blog
+      - eureka
+
+  # 타겟 서비스 (blog)
+  blog:
+    image: jhs7251/inspire-simple-spring:0.3.1
+    ports:
+      - "8765:8080" # 외부로 8765 포트 노출 (선택 사항)
+    # Compose 내부에서는 서비스 이름(hello-service)이 DNS 역할을 합니다.
+  eureka:
+    image: jhs7251/eureka-serv:0.2.1
+    container_name: eureka
+    ports:
+      - "8761:8761"
+  user-service:
+    image: jhs7251/user-service:0.2.0
+    expose:
+      - "9002"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_APPLICATION_NAME=user-service
+      - CPU_STRESS_NUMBER=500
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM_EXAMPLE_USER_SERVICE=DEBUG # 사용자 패키지를 DEBUG로 설정
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=DEBUG  # Spring Web 관련 로그를 상세히 보고 싶을 때 추가
+    deploy:
+      mode: replicated
+      replicas: 5
+      resources: # https://docs.docker.com/compose/compose-file/compose-file-v3/#resources
+        limits:
+          cpus: '0.1'
+          memory: 300M
+        reservations:
+          cpus: '0.01'
+          memory: 250M
+
+    depends_on:
+      eureka:
+        condition: service_started
+  controller:
+    image: ngrinder/controller:3.5.8
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "8300:80"
+      - "16001:16001"
+      - "12000-12009:12000-12009"
+    volumes:
+      - ./ngrinder-controller:/opt/ngrinder-controller
+  agent:
+    image: ngrinder/agent:3.5.8
+    platform: linux/amd64
+    restart: always
+    links:
+      - controller
