@@ -53,7 +53,7 @@ services:
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=DEBUG  # Spring Web 관련 로그를 상세히 보고 싶을 때 추가
     deploy:
       mode: replicated
-      replicas: 5
+      replicas: 2
       resources: # https://docs.docker.com/compose/compose-file/compose-file-v3/#resources
         limits:
           cpus: '0.1'
