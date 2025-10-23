@@ -1,0 +1,20 @@
+upstream blog_servs {
+	server awsgoo-blog-1:8080;
+}
+
+upstream user_servs {
+	server user-service:9002;
+}
+
+server {
+	listen 80;
+	location / {
+		proxy_pass http://blog_servs;
+		proxy_set_header Host $host;
+	}
+
+	location /api/nginx/users/ {
+		proxy_pass http://user_servs/;
+		proxy_set_header Host $host;
+	}
+}
